@@ -10,7 +10,7 @@ Channel.fromPath("samplesheet.csv")
     .set { ftp_download_ch }
 
 DOWNLOAD_FASTQ(ftp_download_ch)
-FASTQC(DOWNLOAD_FASTQ)
-
+FASTQC(DOWNLOAD_FASTQ.out)
+TRIM(DOWNLOAD_FASTQ.out)
 
 }
