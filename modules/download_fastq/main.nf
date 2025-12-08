@@ -1,6 +1,6 @@
 #!/usr/bin/env nextflow
 
-process DOWNLOAD_FTP {
+process DOWNLOAD_FASTQ {
    
     input:
     tuple val(sample), val(url)
