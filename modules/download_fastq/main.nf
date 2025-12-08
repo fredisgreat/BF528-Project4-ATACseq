@@ -12,4 +12,5 @@ process DOWNLOAD_FTP {
     """
     wget $url
     """
+    
 }
