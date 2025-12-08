@@ -17,4 +17,5 @@ process FASTQC {
     """
     fastqc -t $task.cpus $reads
     """
+    
 }
