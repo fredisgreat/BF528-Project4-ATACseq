@@ -15,8 +15,10 @@ process TRIM {
 
     shell:
     """
-    trimmomatic SE -threads $task.cpus -phred33 $reads ${sample_id}_trimmed.fastq.gz ILLUMINACLIP:$adapters:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36 -trimlog ${sample_id}_trim.log
+    trimmomatic SE -threads $task.cpus -phred33 $reads ${sample_id}_trimmed.fastq.gz ILLUMINACLIP:NexteraPE-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36 -trimlog ${sample_id}_trim.log
     """
+
+    NexteraPE-PE.fa:2:30:10
 
     stub:
     """
