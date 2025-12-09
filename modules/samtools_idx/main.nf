@@ -15,9 +15,4 @@ process SAMTOOLS_IDX {
     """ 
     samtools index $bam_sorted
     """
-
-    stub:
-    """
-    touch ${bam_sorted}.bai
-    """
 }
