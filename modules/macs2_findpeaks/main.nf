@@ -1,6 +1,6 @@
 #!/usr/bin/env nextflow
 
-process MACS2_CALLPEAKS {
+process FINDPEAKS {
     label 'process_high'
     container 'ghcr.io/bf528/macs2:latest'
     publishDir params.outdir, mode: 'copy'
