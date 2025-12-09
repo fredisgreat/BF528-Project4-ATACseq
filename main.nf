@@ -4,7 +4,7 @@ include {TRIM} from './modules/trimmomatic'
 
 workflow {
 
-Channel.fromPath("samplesheet.csv")
+Channel.fromPath(params.samplesheet)
     .splitCsv(header:true)
     .map { row -> tuple(row.sample, row.ftp) }
     .set { ftp_download_ch }
