@@ -6,13 +6,13 @@ process SAMTOOLS_IDX {
     publishDir params.outdir, mode:'copy'
 
     input:
-    tuple val(sample), path(bam_sorted)
+    tuple val(sample), path(bam_noMT)
 
     output:
-    tuple val(sample), path(bam_sorted), path("*.bai"), emit: index
+    tuple val(sample), path(bam_noMT), path("*.bai"), emit: index
 
     shell:
     """ 
-    samtools index $bam_sorted
+    samtools index $bam_noMT
     """
 }
