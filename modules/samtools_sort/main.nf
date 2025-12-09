@@ -15,9 +15,4 @@ process SAMTOOLS_SORT {
     """ 
     samtools sort -@ $task.cpus $bam > ${bam.baseName}.sorted.bam
     """
-
-    stub:
-    """
-    touch ${bam.baseName}.sorted.bam
-    """
 }
