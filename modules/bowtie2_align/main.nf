@@ -13,11 +13,7 @@ process BOWTIE2_ALIGN {
 
     shell:
     """ 
-    bowtie2 -x bowtie2_build/${genome} -U $trimmed | samtools view -bS - > ${sample_id}.bam
+    bowtie2 --very-sensitive -x bowtie2_build/${genome} -U $trimmed | samtools view -bS - > ${sample_id}.bam
     """
 
-    stub:
-    """
-    touch ${sample_id}.bam
-    """
 }
