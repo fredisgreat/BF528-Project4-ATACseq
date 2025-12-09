@@ -16,9 +16,5 @@ process BOWTIE2_BUILD {
     mkdir bowtie2_build
     bowtie2-build --threads $task.cpus $genome bowtie2_build/${genome.baseName}
     """
-
-    stub:
-    """
-    mkdir bowtie2_build
-    """
+    
 }
