@@ -9,11 +9,11 @@ process TRIM {
     tuple val(sample_id), path(reads)
 
     output:
-    tuple val(sample_id), path("*_trim.log"), emit: log
+    tuple val(sample_id), path("*_trimmomatic.log"), emit: log
     tuple val(sample_id), path("*_trimmed.fastq.gz"), emit: trimmed
 
     shell:
     """
-    trimmomatic SE -threads $task.cpus -phred33 $reads ${sample_id}_trimmed.fastq.gz ILLUMINACLIP:NexteraPE-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36 -trimlog ${sample_id}_trim.log
+    trimmomatic SE -threads $task.cpus -phred33 $reads ${sample_id}_trimmed.fastq.gz ILLUMINACLIP:NexteraPE-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36 2> ${sample_id}_trimmomatic.log
     """
 }
