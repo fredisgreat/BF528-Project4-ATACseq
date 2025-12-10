@@ -1,0 +1,9 @@
+SampleID,Tissue,Factor,Condition,Replicate,bamReads,Peaks,PeakCaller
+Dc2KOrep1,cells,ATAC,KO,1,results/Dc2KOrep1.noMT.bam,results/Dc2KOrep1_peaks.narrowPeak,narrowPeak
+Dc2KOrep2,cells,ATAC,KO,2,results/Dc2KOrep2.noMT.bam,results/Dc2KOrep2_peaks.narrowPeak,narrowPeak
+Dc2WTrep1,cells,ATAC,WT,1,results/Dc2WTrep1.noMT.bam,results/Dc2WTrep1_peaks.narrowPeak,narrowPeak
+Dc2WTrep2,cells,ATAC,WT,2,results/Dc2WTrep2.noMT.bam,results/Dc2WTrep2_peaks.narrowPeak,narrowPeak
+Dc1KOrep1,cells,ATAC,KO,1,results/Dc1KOrep1.noMT.bam,results/Dc1KOrep1_peaks.narrowPeak,narrowPeak
+Dc1KOrep2,cells,ATAC,KO,2,results/Dc1KOrep2.noMT.bam,results/Dc1KOrep2_peaks.narrowPeak,narrowPeak
+Dc1WTrep1,cells,ATAC,WT,1,results/Dc1WTrep1.noMT.bam,results/Dc1WTrep1_peaks.narrowPeak,narrowPeak
+Dc1WTrep2,cells,ATAC,WT,2,results/Dc1WTrep2.noMT.bam,results/Dc1WTrep2_peaks.narrowPeak,narrowPeak
