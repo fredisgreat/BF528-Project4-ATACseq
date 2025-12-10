@@ -6,7 +6,7 @@ process SAMTOOLS_REMOVEMITO {
     publishDir params.outdir, mode:'copy'
 
     input:
-    tuple val(sample), path(bam_sorted)
+    tuple val(sample), path(bam)
 
     output:
     tuple val(sample), path("*.noMT.bam"), emit: noMT
