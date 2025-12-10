@@ -4,7 +4,8 @@ include {TRIM} from './modules/trimmomatic'
 include {BOWTIE2_BUILD} from './modules/bowtie2_build'
 include {BOWTIE2_ALIGN} from './modules/bowtie2_align'
 include {SAMTOOLS_REMOVEMITO} from './modules/samtools_removeMito'
-include {FINDPEAKS} from './modules/macs2_findpeaks'
+include {FINDPEAKS} from './modules/macs3_callpeaks'
+include {SAMTOOLS_FLAGSTAT} from './modules/samtools_flagstat'
 
 workflow {
 
@@ -19,6 +20,7 @@ TRIM(DOWNLOAD_FASTQ.out)
 BOWTIE2_BUILD(params.genome)
 BOWTIE2_ALIGN(TRIM.out.trimmed, BOWTIE2_BUILD.out)
 SAMTOOLS_REMOVEMITO(BOWTIE2_ALIGN.out)
+SAMTOOLS_FLAGSTAT(BOWTIE2_ALIGN.out)
 
 fastqc_zip = FASTQC.out.zip.map { name, zip -> tuple(name, zip) }
 trim_log = TRIM.out.log.map { name, log -> tuple(name, log) }
