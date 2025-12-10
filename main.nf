@@ -6,6 +6,7 @@ include {BOWTIE2_ALIGN} from './modules/bowtie2_align'
 include {SAMTOOLS_REMOVEMITO} from './modules/samtools_removeMito'
 include {FINDPEAKS} from './modules/macs3_callpeaks'
 include {SAMTOOLS_FLAGSTAT} from './modules/samtools_flagstat'
+include {MULTIQC} from './modules/multiqc'
 
 workflow {
 
