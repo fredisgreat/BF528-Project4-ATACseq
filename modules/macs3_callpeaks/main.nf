@@ -2,11 +2,11 @@
 
 process FINDPEAKS {
     label 'process_high'
-    container 'ghcr.io/bf528/macs2:latest'
+    container 'ghcr.io/bf528/macs3:latest'
     publishDir params.outdir, mode: 'copy'
 
     input:
-    tuple val(sample), path(bam)
+    tuple val(sample), path(bam), path(bai)
 
     output:
     path("*_peaks.narrowPeak")
