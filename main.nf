@@ -7,6 +7,8 @@ include {SAMTOOLS_REMOVEMITO} from './modules/samtools_removeMito'
 include {FINDPEAKS} from './modules/macs3_callpeaks'
 include {SAMTOOLS_FLAGSTAT} from './modules/samtools_flagstat'
 include {MULTIQC} from './modules/multiqc'
+include {SAMTOOLS_SORT} from './modules/samtools_sort'
+include {SAMTOOLS_IDX} from './modules/samtools_idx'
 
 workflow {
 
@@ -20,8 +22,10 @@ FASTQC(DOWNLOAD_FASTQ.out)
 TRIM(DOWNLOAD_FASTQ.out)
 BOWTIE2_BUILD(params.genome)
 BOWTIE2_ALIGN(TRIM.out.trimmed, BOWTIE2_BUILD.out)
-SAMTOOLS_REMOVEMITO(BOWTIE2_ALIGN.out)
-SAMTOOLS_FLAGSTAT(BOWTIE2_ALIGN.out)
+SAMTOOLS_SORT(BOWTIE2_ALIGN.out)
+SAMTOOLS_IDX(SAMTOOLS_SORT.out)
+SAMTOOLS_REMOVEMITO(SAMTOOLS_IDX.out)
+SAMTOOLS_FLAGSTAT(SAMTOOLS_REMOVEMITO.out)
 
 fastqc_zip = FASTQC.out.zip.map { name, zip -> tuple(name, zip) }
 trim_log = TRIM.out.log.map { name, log -> tuple(name, log) }
