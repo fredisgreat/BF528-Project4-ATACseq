@@ -9,6 +9,8 @@ include {SAMTOOLS_FLAGSTAT} from './modules/samtools_flagstat'
 include {MULTIQC} from './modules/multiqc'
 include {SAMTOOLS_SORT} from './modules/samtools_sort'
 include {SAMTOOLS_IDX} from './modules/samtools_idx'
+include {ANNOTATE} from './modules/homer_annotatepeaks'
+include {FIND_MOTIFS_GENOME} from './modules/homer_findmotifsgenome'
 
 workflow {
 
@@ -40,5 +42,13 @@ multiqc_ch = fastqc_zip
 MULTIQC(multiqc_ch)
 
 FINDPEAKS(SAMTOOLS_REMOVEMITO.out)
+
+Channel.of(
+    ['DC1', file('DC1_significant_peaks.bed')],
+    ['DC2', file('DC2_significant_peaks.bed')]
+).set { peaks_ch }
+
+ANNOTATE(peaks_ch, params.genome, params.gtf)
+FIND_MOTIFS_GENOME(peaks_ch, params.genome)
 
 }
