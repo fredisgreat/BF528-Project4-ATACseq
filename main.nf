@@ -11,6 +11,9 @@ include {SAMTOOLS_SORT} from './modules/samtools_sort'
 include {SAMTOOLS_IDX} from './modules/samtools_idx'
 include {ANNOTATE} from './modules/homer_annotatepeaks'
 include {FIND_MOTIFS_GENOME} from './modules/homer_findmotifsgenome'
+include {BAMCOVERAGE} from './modules/deeptools_bamcoverage'
+include {COMPUTEMATRIX} from './modules/deeptools_computematrix'
+include {PLOTHEATMAP} from './modules/deeptools_plotheatmap'
 
 workflow {
 
@@ -50,5 +53,41 @@ Channel.of(
 
 ANNOTATE(peaks_ch, params.genome, params.gtf)
 FIND_MOTIFS_GENOME(peaks_ch, params.genome)
+
+BAMCOVERAGE(SAMTOOLS_REMOVEMITO.out)
+COMPUTEMATRIX(BAMCOVERAGE.out, params.ucsc_tss)
+
+bigwig_ch = BAMCOVERAGE.out.bigwig
+    .map { name, bw ->
+        def celltype = name.toUpperCase().contains("DC1") ? "DC1" : "DC2"
+        tuple(celltype, bw)
+    }
+
+bigwig_grouped_ch = bigwig_ch.groupTuple()
+
+bed_grouped_ch = Channel.fromPath("*figure.bed")
+    .map { bedfile ->
+        def base = bedfile.baseName.toUpperCase()
+        def parts = base.split('_')
+        def celltype = parts[0]
+        def key = "${parts[0]}_${parts[1]}"
+        tuple(key, bedfile)
+    }
+
+bed_by_celltype_ch = bed_grouped_ch
+    .map { key, bedfile ->
+        def celltype = key.split('_')[0]
+        tuple(celltype, bedfile)
+    }
+    .groupTuple()
+
+matrix_input_ch = bed_by_celltype_ch
+    .join(bigwig_grouped_ch)
+    .map { celltype, bedfiles, bigwigs ->
+        tuple(celltype, bedfiles, bigwigs)
+    }
+    .view()
+
+PLOTHEATMAP(matrix_input_ch)
 
 }
