@@ -3,3 +3,150 @@ title: "diffbind"
 output: html_document
 ---
 
+```{r}
+BiocManager::install('DiffBind')
+BiocManager::install('rtracklater')
+```
+
+```{r}
+library(DiffBind)
+library(rtracklayer)
+library(GenomicRanges)
+library(edgeR)
+```
+
+```{r}
+# DC1: Load peaks, count reads in consensus peaks (min 2 samples overlap)
+db1 <- dba(sampleSheet="DC1_diffbind.csv")
+db1 <- dba.count(db1, minOverlap=2)
+
+# Extract count matrix for edgeR differential analysis
+counts_df1 <- dba.peakset(db1, bRetrieve=TRUE, DataType=DBA_DATA_FRAME)
+count_matrix1 <- as.matrix(counts_df1[, 4:7])
+
+# edgeR: TMM normalization, QL F-test for KO vs WT
+group1 <- factor(c("KO", "KO", "WT", "WT"))
+y1 <- DGEList(counts=count_matrix1, group=group1)
+y1 <- calcNormFactors(y1, method="TMM")
+design1 <- model.matrix(~group1)
+y1 <- estimateDisp(y1, design1)
+fit1 <- glmQLFit(y1, design1)
+qlf1 <- glmQLFTest(fit1, coef=2)
+results1 <- topTags(qlf1, n=Inf)$table
+
+# Filter significant peaks (p < 0.01)
+sig_results1 <- results1[results1$PValue < 0.01, ]
+
+# DC2: Repeat same analysis
+db2 <- dba(sampleSheet="DC2_diffbind.csv")
+db2 <- dba.count(db2, minOverlap=2)
+
+counts_df2 <- dba.peakset(db2, bRetrieve=TRUE, DataType=DBA_DATA_FRAME)
+count_matrix2 <- as.matrix(counts_df2[, 4:7])
+
+group2 <- factor(c("KO", "KO", "WT", "WT"))
+y2 <- DGEList(counts=count_matrix2, group=group2)
+y2 <- calcNormFactors(y2, method="TMM")
+design2 <- model.matrix(~group2)
+y2 <- estimateDisp(y2, design2)
+fit2 <- glmQLFit(y2, design2)
+qlf2 <- glmQLFTest(fit2, coef=2)
+results2 <- topTags(qlf2, n=Inf)$table
+
+sig_results2 <- results2[results2$PValue < 0.01, ]
+
+```
+
+```{r}
+dba.show(db1)
+dba.show(db2)
+
+# Save cDC1 results as CSV
+write.csv(results1, "atac_cDC1_results.csv", row.names=TRUE)
+
+# Save cDC2 results as CSV
+write.csv(results2, "atac_cDC2_results.csv", row.names=TRUE)
+```
+
+
+```{r}
+# DC1: Convert significant peaks to GRanges and export as BED
+sig_indices1 <- match(rownames(sig_results1), rownames(counts_df1))
+
+sig_peaks1 <- GRanges(
+  seqnames = counts_df1$CHR[sig_indices1],
+  ranges = IRanges(
+    start = counts_df1$START[sig_indices1],
+    end = counts_df1$END[sig_indices1]
+  )
+)
+
+export.bed(sig_peaks1, "DC1_significant_peaks.bed")
+
+# DC2: Repeat same analysis
+sig_indices2 <- match(rownames(sig_results2), rownames(counts_df2))
+
+sig_peaks2 <- GRanges(
+  seqnames = counts_df2$CHR[sig_indices2],
+  ranges = IRanges(
+    start = counts_df2$START[sig_indices2],
+    end = counts_df2$END[sig_indices2]
+  )
+)
+
+export.bed(sig_peaks2, "DC2_significant_peaks.bed")
+
+```
+
+# Files for recreating figure 6A and 6B
+```{r}
+# DC1: Separate gain vs loss peaks
+gain_indices1 <- match(rownames(sig_results1[sig_results1$logFC > 0, ]), rownames(counts_df1))
+loss_indices1 <- match(rownames(sig_results1[sig_results1$logFC < 0, ]), rownames(counts_df1))
+
+# Create GRanges for gain peaks
+gain_peaks1 <- GRanges(
+  seqnames = counts_df1$CHR[gain_indices1],
+  ranges = IRanges(
+    start = counts_df1$START[gain_indices1],
+    end = counts_df1$END[gain_indices1]
+  )
+)
+
+# Create GRanges for loss peaks
+loss_peaks1 <- GRanges(
+  seqnames = counts_df1$CHR[loss_indices1],
+  ranges = IRanges(
+    start = counts_df1$START[loss_indices1],
+    end = counts_df1$END[loss_indices1]
+  )
+)
+
+export.bed(gain_peaks1, "DC1_gain_figure.bed")
+export.bed(loss_peaks1, "DC1_loss_figure.bed")
+
+# DC2: Same process
+gain_indices2 <- match(rownames(sig_results2[sig_results2$logFC > 0, ]), rownames(counts_df2))
+loss_indices2 <- match(rownames(sig_results2[sig_results2$logFC < 0, ]), rownames(counts_df2))
+
+gain_peaks2 <- GRanges(
+  seqnames = counts_df2$CHR[gain_indices2],
+  ranges = IRanges(
+    start = counts_df2$START[gain_indices2],
+    end = counts_df2$END[gain_indices2]
+  )
+)
+
+loss_peaks2 <- GRanges(
+  seqnames = counts_df2$CHR[loss_indices2],
+  ranges = IRanges(
+    start = counts_df2$START[loss_indices2],
+    end = counts_df2$END[loss_indices2]
+  )
+)
+
+export.bed(gain_peaks2, "DC2_gain_figure.bed")
+export.bed(loss_peaks2, "DC2_loss_figure.bed")
+```
+
+
