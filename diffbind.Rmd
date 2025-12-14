@@ -58,14 +58,21 @@ sig_results2 <- results2[results2$PValue < 0.01, ]
 ```
 
 ```{r}
+cat("DC1:", nrow(sig_results1), "differentially accessible regions\n")
+cat("DC2:", nrow(sig_results2), "differentially accessible regions")
+```
+
+```{r}
 dba.show(db1)
 dba.show(db2)
 
 # Save cDC1 results as CSV
 write.csv(results1, "atac_cDC1_results.csv", row.names=TRUE)
+write.csv(counts_df1, "atac_cDC1_peaks.csv", row.names=FALSE)
 
 # Save cDC2 results as CSV
 write.csv(results2, "atac_cDC2_results.csv", row.names=TRUE)
+write.csv(counts_df2, "atac_cDC2_peaks.csv", row.names=FALSE)
 ```
 
 
