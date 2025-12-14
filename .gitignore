@@ -6,3 +6,7 @@ refs/
 .nextflow*
 *.gz
 *.img
+pictures
+*.bed
+*.csv
+*.txt
