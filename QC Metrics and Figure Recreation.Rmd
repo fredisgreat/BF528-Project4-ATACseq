@@ -1,0 +1,328 @@
+---
+title: "QC Metrics and Figure Recreation"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(forcats)
+library(ggplot2)
+library(devtools)
+library(rGREAT)
+library(readr)
+library(ggrepel)
+```
+
+# TSS enrichment score
+```{r}
+# Function to properly load in matrix from deeptools computematrix
+load_matrix <- function(file) {
+  raw <- readLines(file)
+  raw <- raw[!grepl("^#", raw)]
+  raw <- raw[-1]
+  mat_raw <- read.table(text = raw, header = FALSE,
+                        fill = TRUE, sep = "\t", quote = "")
+  
+  numeric_cols <- sapply(mat_raw, function(col) {
+    all(grepl("^-?[0-9.]+$", col))
+  })
+
+  mat <- apply(mat_raw[, numeric_cols, drop = FALSE], 2, as.numeric)
+
+  return(mat)
+}
+
+# Function to compute TSS enrichment score
+compute_TSS_enrichment <- function(mat) {
+
+  profile <- colMeans(mat, na.rm = TRUE)
+  n <- length(profile)
+
+  # center = ~10% around the middle (TSS)
+  center <- profile[round(n*0.45) : round(n*0.55)]
+
+  # background = first 10% + last 10%
+  background <- c(profile[1:round(n*0.1)],
+                  profile[round(n*0.9):n])
+
+  score <- mean(center) / mean(background)
+  return(score)
+}
+
+files <- list.files(path = "results", pattern = "TSS_matrix\\.tab$", full.names = TRUE)
+
+# Compute TSS score for each file
+tss_scores <- sapply(files, function(f) {
+  mat <- load_matrix(f)
+  compute_TSS_enrichment(mat)
+})
+
+tss_scores
+
+```
+# ENRICHR figure
+```{r}
+annotated_peaks1 <- read.delim("/projectnb/bf528/students/fchoi/final-project-template-fredisgreat/results/DC1_annotated_peaks.txt", header = TRUE, check.names = FALSE)
+
+peaks1 <- annotated_peaks1[, c("Chr", "Start", "End")]
+peaks1 <- peaks1[grepl("^chr[0-9]+$|^chrX$|^chrY$", peaks1$Chr), ]
+
+write.table(peaks1, file = "DC1_sig_peaks.txt", sep = "\t", col.names = F, row.names = F, quote = F)
+
+job1 <- submitGreatJob(peaks1, species = "mm10")
+
+enrichmentTable1 <- getEnrichmentTables(job1)
+enrichmentTable1
+names(enrichmentTable1)
+
+go_bp1 <- enrichmentTable1[["GO Biological Process"]]
+go_bp1
+
+df1_top10 <- go_bp1 %>%
+  arrange(Hyper_Adjp_BH) %>% 
+  slice_head(n = 10)
+
+df1_top10
+```
+
+```{r}
+ggplot(df1_top10,
+       aes(x = Hyper_Gene_Set_Coverage * 100,
+           y = fct_reorder(name, Hyper_Gene_Set_Coverage),
+           fill = Hyper_Adjp_BH)) +
+  geom_col() +
+  scale_fill_gradient(low = "red", high = "blue",
+                      name = "Adjusted p-value (FDR)") +
+  labs(
+    x = "Percentage of genes in pathway (%)",
+    y = "",
+    title = "DC1 Top 10 GREAT Enriched Pathways\n(GO Biological Process)"
+  ) +
+  theme_minimal(base_size = 12)
+```
+```{r}
+annotated_peaks2 <- read.delim("/projectnb/bf528/students/fchoi/final-project-template-fredisgreat/results/DC2_annotated_peaks.txt", header = TRUE, check.names = FALSE)
+
+peaks2 <- annotated_peaks2[, c("Chr", "Start", "End")]
+peaks2 <- peaks2[grepl("^chr[0-9]+$|^chrX$|^chrY$", peaks2$Chr), ]
+
+write.table(peaks2, file = "DC2_sig_peaks.txt", sep = "\t", col.names = F, row.names = F, quote = F)
+
+job2 <- submitGreatJob(peaks2, species = "mm10")
+
+enrichmentTable2 <- getEnrichmentTables(job2)
+enrichmentTable2
+names(enrichmentTable2)
+
+go_bp2 <- enrichmentTable2[["GO Biological Process"]]
+go_bp2
+
+df2_top10 <- go_bp2 %>%
+  arrange(Hyper_Adjp_BH) %>% 
+  slice_head(n = 10)
+
+df2_top10
+```
+
+```{r}
+ggplot(df2_top10,
+       aes(x = Hyper_Gene_Set_Coverage * 100,
+           y = fct_reorder(name, Hyper_Gene_Set_Coverage),
+           fill = Hyper_Adjp_BH)) +
+  geom_col() +
+  scale_fill_gradient(low = "red", high = "blue",
+                      name = "Adjusted p-value (FDR)") +
+  labs(
+    x = "Percentage of genes in pathway (%)",
+    y = "",
+    title = "DC2 Top 10 GREAT Enriched Pathways\n(GO Biological Process)"
+  ) +
+  theme_minimal(base_size = 12)
+```
+
+# Figure 6C
+```{r}
+# Load the data
+dc1_rna_tsv <- read_tsv('GSE266583_cDC1_Norm_counts.tsv', show_col_types=FALSE)
+dc1_rna_tsv
+rna_counts <- as.matrix(dc1_rna_tsv[, -1])
+rownames(rna_counts) <- dc1_rna_tsv$gene_id
+
+# Defining groups
+wt_cols <- c("a157", "a160", "a163")
+ko_cols <- c("a166", "a169", "a172")
+
+# Calculate log2FC
+mean_wt <- rowMeans(rna_counts[, wt_cols])
+mean_ko <- rowMeans(rna_counts[, ko_cols])
+log2fc_rna <- log2((mean_ko + 0.1) / (mean_wt + 0.1))
+
+# Create RNA results
+rna_results <- data.frame(
+  gene = rownames(rna_counts),
+  log2FC_RNA = log2fc_rna,
+  stringsAsFactors = FALSE
+)
+
+rna_results <- rna_results[mean_wt > 1 | mean_ko > 1, ]
+rna_results
+
+# Load HOMER annotated peaks
+dc1_atac_annotate <- read.table("results/DC1_annotated_peaks.txt", header = TRUE, sep='\t')
+dc1_atac_annotate
+
+# Load ATAC differential results
+atac_results <- read.csv("atac_cDC1_results.csv", row.names=1)
+atac_results$PeakID <- as.numeric(rownames(atac_results))
+atac_results$Gene <- dc1_atac_annotate$Gene.Name[atac_results$PeakID]
+
+# Remove peaks without gene names
+atac_with_genes <- atac_results[!is.na(atac_results$Gene) & 
+                                 atac_results$Gene != "" &
+                                 atac_results$Gene != "NA", ]
+
+colnames(atac_with_genes)[colnames(atac_with_genes) == "logFC"] <- "log2FC_ATAC"
+atac_with_genes
+
+# Merge ATAC and RNA
+merged <- merge(atac_with_genes, 
+                rna_results,
+                by.x="Gene",
+                by.y="gene")
+merged
+
+# Assign colors based on quadrants
+merged$color <- "gray"
+merged$color[merged$log2FC_RNA > 0 & merged$log2FC_ATAC > 0] <- "red"
+merged$color[merged$log2FC_RNA < 0 & merged$log2FC_ATAC < 0] <- "blue"
+
+# Create plot
+p <- ggplot(merged, aes(x=log2FC_RNA, y=log2FC_ATAC, color=color)) +
+  geom_point(alpha=0.5, size=1) +
+  geom_vline(xintercept=0, color="black") +
+  geom_hline(yintercept=0, color="black") +
+  scale_color_manual(values=c("blue"="dodgerblue", "red"="red", "gray"="gray60"),
+                     guide="none") +
+  theme_classic() +
+  labs(x="log2FoldChange RNA", 
+       y="log2FoldChange ATAC",
+       title="cDC1") +
+  theme(axis.text=element_text(size=10),
+        axis.title=element_text(size=12),
+        plot.title=element_text(size=14, face="bold"))
+
+# Labeling genes from figure
+genes_to_label <- c("Nectin2", "Il13ra1", "Maged1", "Cd8a", "Nfil3")
+genes_present <- genes_to_label[genes_to_label %in% merged$Gene]
+
+p_labeled <- p + 
+  geom_text_repel(data=subset(merged, Gene %in% genes_present),
+                  aes(label=Gene),
+                  size=3.5,
+                  max.overlaps=20,
+                  color="black",
+                  fontface="italic"
+                )
+
+p_labeled
+
+```
+
+# Figure 6E
+```{r}
+# Load the data
+dc2_rna_tsv <- read_tsv("GSE266583_cDC2_Norm_counts.tsv", show_col_types = FALSE)
+dc2_rna_tsv
+
+rna_counts2 <- as.matrix(dc2_rna_tsv[, -1])
+rownames(rna_counts2) <- dc2_rna_tsv$gene_id
+
+# Defining groups
+wt_cols2 <- c("a158", "a161", "a165")
+ko_cols2 <- c("a167", "a170", "a173")
+
+# Calculate log2FC
+mean_wt2 <- rowMeans(rna_counts2[, wt_cols2])
+mean_ko2 <- rowMeans(rna_counts2[, ko_cols2])
+log2fc_rna2 <- log2((mean_ko2 + 0.1) / (mean_wt2 + 0.1))
+
+# Create RNA results
+rna_results2 <- data.frame(
+  gene = rownames(rna_counts2),
+  log2FC_RNA = log2fc_rna2,
+  stringsAsFactors = FALSE
+)
+
+rna_results2 <- rna_results2[mean_wt2 > 1 | mean_ko2 > 1, ]
+rna_results
+
+# Load HOMER annotated peaks
+dc2_atac_annotate <- read.table("results/DC2_annotated_peaks.txt",
+                                header = TRUE, sep = "\t")
+dc2_atac_annotate
+
+# Load ATAC differential results
+atac_results2 <- read.csv("atac_cDC2_results.csv", row.names = 1)
+atac_results2$PeakID <- as.numeric(rownames(atac_results2))
+atac_results2$Gene <- dc2_atac_annotate$Gene.Name[atac_results2$PeakID]
+
+# Remove peaks without gene names
+atac_with_genes2 <- atac_results2[
+  !is.na(atac_results2$Gene) &
+    atac_results2$Gene != "" &
+    atac_results2$Gene != "NA",
+]
+atac_with_genes2
+
+colnames(atac_with_genes2)[colnames(atac_with_genes2) == "logFC"] <- "log2FC_ATAC"
+
+# Merge ATAC and RNA
+merged2 <- merge(atac_with_genes2,
+                 rna_results2,
+                 by.x = "Gene",
+                 by.y = "gene")
+merged2
+
+# Assign colors by quadrant
+merged2$color <- "gray"
+merged2$color[merged2$log2FC_RNA > 0 & merged2$log2FC_ATAC > 0] <- "red"
+merged2$color[merged2$log2FC_RNA < 0 & merged2$log2FC_ATAC < 0] <- "blue"
+
+# Create plot
+p2 <- ggplot(merged2, aes(x = log2FC_RNA, y = log2FC_ATAC, color = color)) +
+  geom_point(alpha = 0.5, size = 1) +
+  geom_vline(xintercept = 0, color = "black") +
+  geom_hline(yintercept = 0, color = "black") +
+  scale_color_manual(values = c("blue" = "dodgerblue",
+                                "red" = "red",
+                                "gray" = "gray60"),
+                     guide = "none") +
+  theme_classic() +
+  labs(
+    x = "log2FoldChange RNA",
+    y = "log2FoldChange ATAC",
+    title = "cDC2"
+  ) +
+  theme(
+    axis.text = element_text(size = 10),
+    axis.title = element_text(size = 12),
+    plot.title = element_text(size = 14, face = "bold")
+  )
+
+# Labeling genes from figure
+genes_to_label2 <- c("Spib", "Irf8", "Csf3r", "Susd2", "Nectin2")
+
+genes_present2 <- genes_to_label2[genes_to_label2 %in% merged2$Gene]
+
+p2_labeled <- p2 +
+  geom_text_repel(data = subset(merged2, Gene %in% genes_present2),
+                  aes(label = Gene),
+                  size = 3.5,
+                  max.overlaps = 20,
+                  color = "black",
+                  fontface = "italic"
+  )
+
+p2_labeled
+
+```
