@@ -149,8 +149,8 @@ rna_counts <- as.matrix(dc1_rna_tsv[, -1])
 rownames(rna_counts) <- dc1_rna_tsv$gene_id
 
 # Defining groups
-wt_cols <- c("a157", "a160", "a163")
-ko_cols <- c("a166", "a169", "a172")
+wt_cols <- c("a160", "a163")
+ko_cols <- c("a169", "a172")
 
 # Calculate log2FC
 mean_wt <- rowMeans(rna_counts[, wt_cols])
@@ -238,8 +238,8 @@ rna_counts2 <- as.matrix(dc2_rna_tsv[, -1])
 rownames(rna_counts2) <- dc2_rna_tsv$gene_id
 
 # Defining groups
-wt_cols2 <- c("a158", "a161", "a165")
-ko_cols2 <- c("a167", "a170", "a173")
+wt_cols2 <- c("a161", "a165")
+ko_cols2 <- c("a170", "a173")
 
 # Calculate log2FC
 mean_wt2 <- rowMeans(rna_counts2[, wt_cols2])
