@@ -45,6 +45,7 @@ This command will automatically:
 10. Compute TSS enrichment with deeptools
 
 Once FINDPEAKS has been run, open the Rmarkdown notebook labeled "diffbind.Rmd" and run all the code inside. This code will automatically:
+
 11. Perfrom differential accessibility with DiffBind (edgeR + TMM)
 
 12. Provide ATAC-seq QC metrics
