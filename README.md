@@ -23,26 +23,41 @@ The deliverables that this project covers is as follows:
 In order to run this pipeline, simply run the command to run the pipeline on the SCC: nextflow run main.nf -profile singularity,cluster
 
 This command will automatically:
+
 1. Download the FASTQ files
+
 2. Run FASTQC
+
 3. Trim reads with Trimmomatic
+
 4. Build bowtie2 index and align reads
+
 5. Sort and index BAM files
+
 6. Remove mitochondrial reads
+
 7. Find/Call peaks with MACS3
+
 8. Generate a MultiQC report from FASTQC, Trimmomatic, and Samtools Flagstat
+
 9. Create bigWig files from the indexed BAM files
+
 10. Compute TSS enrichment with deeptools
 
 Once FINDPEAKS has been run, open the Rmarkdown notebook labeled "diffbind.Rmd" and run all the code inside. This code will automatically:
 11. Perfrom differential accessibility with DiffBind (edgeR + TMM)
+
 12. Provide ATAC-seq QC metrics
+
 13. Create bed files for downstream analyses
 
 After running through the Rmarkdown notebook, the nextflow workflow can continue with: nextflow run main.nf -profile singularity,cluster
 
 And this will finish the pipeline by running:
+
 14. Annotate peaks with HOMER
+
 15. Find motifs with HOMER
+
 16. Generate a heatmap with deeptools
 
